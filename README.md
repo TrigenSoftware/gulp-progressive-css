@@ -21,8 +21,8 @@ By using this plugin you can easily transform your simple HTML page to super fas
 
 ```html
 <link rel="stylesheet" priority="critical" href="critical.css">
-<link rel="stylesheet" priority="queued" href="loader.php?file=content.css&sleep=2">
-<link rel="stylesheet" priority="queued" href="loader.php?file=footer.css&sleep=4">
+<link rel="stylesheet" priority="queued" href="content.css">
+<link rel="stylesheet" priority="queued" href="footer.css">
 ```
 
 `critical` - means what this styles will be embedded into HTML file.
