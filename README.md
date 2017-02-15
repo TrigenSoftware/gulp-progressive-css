@@ -26,6 +26,7 @@ By using this plugin you can easily transform your simple HTML page to super fas
 ```
 
 `critical` - means what this styles will be embedded into HTML file.
+
 `queued` - means what this styles will be loaded asynchronously in specified order and without render blocking.
 
 # API
@@ -35,14 +36,17 @@ By using this plugin you can easily transform your simple HTML page to super fas
 #### `String options.base`
 
 Base directory to find CSS files.
+
 Default: `./`
 
 #### `String options.useXHR`
 
 Load styles with `<link>` or using XMLHttpRequest. [You can get more info here.](https://github.com/TrigenSoftware/import-css#about)
+
 Default: `false`
 
-Example of `gulpfile.js`:
+# Example 
+[`gulpfile.js`](https://github.com/TrigenSoftware/gulp-progressive-css/tree/master/example)
 ```js
 const gulp = require('gulp'),
 	procss = require('gulp-progressive-css');
