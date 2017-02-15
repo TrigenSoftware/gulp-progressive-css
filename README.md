@@ -39,7 +39,7 @@ Base directory to find CSS files.
 
 Default: `./`
 
-#### `String options.useXHR`
+#### `Boolean options.useXHR`
 
 Load styles with `<link>` or using XMLHttpRequest. [You can get more info here.](https://github.com/TrigenSoftware/import-css#about)
 
