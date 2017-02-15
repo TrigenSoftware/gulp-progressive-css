@@ -1,0 +1,13 @@
+
+section {
+	display: block;
+}
+
+section > main {
+	font-size: 2em;
+	color: green;
+	height: 80vh;
+	display: flex;
+    justify-content: center;
+    align-items: center;
+}

@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>Progressive CSS Playground</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, minimal-ui">
+		<meta name="format-detection" content="telephone=no"/>
+		<style>* {
+	box-sizing: border-box;
+}
+
+body {
+	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+	margin: 0;
+}
+
+header > main,
+section > main,
+footer > main {
+	max-width: 900px;
+	margin: 0 auto;
+	overflow: hidden;
+}
+
+header {
+	position: fixed;
+	left: 0;
+	right: 0;
+}
+
+header > main {
+	height: 20vh;
+}
+
+section, footer {
+	display: none;
+}</style>
+	</head>
+	<body>
+		<header>
+			<main>
+				<h1>Header</h1>
+			</main>
+		</header>
+		<section>
+			<main>
+				<h1>Section</h1>
+			</main>
+		</section>
+		<footer>
+			<main>
+				<h1>Footer</h1>
+			</main>
+		</footer>
+		<script>!(function(w){'use strict';w.importCSS=importCSS;var $=document,root=$.body||$.getElementsByTagName('head')[0],sheets=$.styleSheets,queue=[];function onLoadLinkDefined(a,b){for(var c=sheets.length;c--;)if(sheets[c].href===a)return void b();setTimeout(function(){return onLoadLinkDefined(a,b)})}function importCSS(a,b){function c(){d.addEventListener&&d.removeEventListener('load',c),e=!0;var f=!0;queue=queue.filter(function(g){return!(f=f&&g())})}var d=$.createElement('link'),e=!1;d.rel='stylesheet',d.href=a,d.media='only x',queue.push(function(){return e&&(d.media=b||'all'),e}),root.insertBefore(d,null),d.addEventListener&&d.addEventListener('load',c),onLoadLinkDefined(d.href,c)}})(window)</script>
+		<script>importCSS('loader.php?file=content.css&sleep=2')</script>
+		<script>importCSS('loader.php?file=footer.css&sleep=4')</script>
+	</body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "name": "test",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": {},
+  "author": "dangreen",
+  "license": "MIT",
+  "dependencies": {
+    "gulp": "github:gulpjs/gulp#4.0",
+    "gulp-progressive-css": "file:../"
+  }
+}
