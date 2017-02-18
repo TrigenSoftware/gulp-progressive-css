@@ -1,6 +1,7 @@
 import { HTMLParser } from 'html-minifier/src/htmlparser';
 import detectIndent from 'detect-indent';
 import Path from 'path';
+import Url from 'url';
 import Fs from 'pn/fs';
 
 function stringRegExpEscape(string) {
@@ -24,9 +25,10 @@ function getImportCSS(useXHR = false) {
 
 function getCriticalCSS(href, base = false) {
 
-	const cssPath = base
-		? Path.join(base, href)
-		: href;
+	const { pathname } = Url.parse(href),
+		cssPath = base
+			? Path.join(base, pathname)
+			: pathname;
 
 	return Fs.readFile(cssPath, 'utf8');
 }
