@@ -1,6 +1,6 @@
 {
   "name": "gulp-progressive-css",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Transfrom `<link>` in HTML to progressive CSS loading.",
   "main": "lib/index.js",
   "scripts": {
@@ -11,6 +11,13 @@
   "repository": "https://github.com/TrigenSoftware/gulp-progressive-css",
   "author": "dangreen",
   "license": "MIT",
+  "keywords": [
+    "gulp",
+    "gulpplugin",
+    "progressive-css",
+    "progressive",
+    "css"
+  ],
   "dependencies": {
     "detect-indent": "^5.0.0",
     "html-minifier": "^3.3.1",
