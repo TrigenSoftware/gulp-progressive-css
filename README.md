@@ -45,6 +45,18 @@ Load styles with `<link>` or using XMLHttpRequest. [You can get more info here.]
 
 Default: `false`
 
+#### `Boolean options.noscript`
+
+Adds `<noscript>` tag with all styles.
+
+Default: `true`
+
+#### `Boolean options.preload`
+
+If `useXHR` is `false` then `<link rel="preload">` will be added to `<head>` for each style.
+
+Default: `true`
+
 # Example 
 [`gulpfile.js`](https://github.com/TrigenSoftware/gulp-progressive-css/tree/master/example)
 ```js

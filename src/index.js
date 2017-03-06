@@ -4,8 +4,10 @@ import through from 'through2';
 export default function plugin(inputOptions) {
 
 	const options = Object.assign({
-		useXHR: false,
-		base:   false
+		useXHR:   false,
+		noscript: true,
+		preload:  true,
+		base:     './'
 	}, inputOptions);
 
 	function each(file, enc, next) {
@@ -16,8 +18,7 @@ export default function plugin(inputOptions) {
 
 		return transform(
 			file.contents.toString('utf8'),
-			options.base,
-			options.useXHR
+			options
 		).then((markup) => {
 
 			const transformedFile = file.clone({ contents: false });

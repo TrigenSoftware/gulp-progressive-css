@@ -33,14 +33,18 @@ function getCriticalCSS(href, base = false) {
 	return Fs.readFile(cssPath, 'utf8');
 }
 
-export default function transform(markup, base = './', useXHR = false) {
+export default function transform(markup, { base, useXHR, noscript, preload }) {
 
 	const indent = detectIndent(markup).indent || '  ',
+		nl = `\n${indent}${indent}`,
+		headPoint = /(\n\s*<\/head>)/,
+		mountPoint = useXHR
+			? headPoint
+			: /(\n\s*<\/body>)/,
 		styles = [],
 		scripts = [];
 
-	let transformedMarkup = markup,
-		isFirstQueued = true;
+	let transformedMarkup = markup;
 
 	return getImportCSS(useXHR).then((importCSS) => {
 
@@ -80,44 +84,52 @@ export default function transform(markup, base = './', useXHR = false) {
 					if (rel == 'stylesheet' && typeof href == 'string') {
 
 						if (priority == 'critical') {
+
 							styles.push({
 								tagRegExp,
 								href
 							});
+
 						} else
 						if (priority == 'queued') {
 
-							if (useXHR) {
-								transformedMarkup = transformedMarkup.replace(
-									tagRegExp,
-									`${isFirstQueued
-										? `$1<script>${importCSS.trim()}</script>`
-										: ''
-									}$1<script>importCSS('${href}')</script>`
-								);
-							} else {
-								scripts.push([href, media]);
-								transformedMarkup = transformedMarkup.replace(
-									tagRegExp,
-									''
-								);
-							}
-
-							isFirstQueued = false;
+							scripts.push([href, media]);
+							transformedMarkup = transformedMarkup.replace(
+								tagRegExp,
+								''
+							);
 						}
 					}
 				}
 			}
 		});
 
-		if (!useXHR) {
+		transformedMarkup = transformedMarkup.replace(
+			mountPoint,
+			`${nl}<script>${importCSS.trim()}</script>${
+				scripts.map(_ =>
+					`${nl}<script>importCSS('${_.filter(_ => _).join(`', '`)}')</script>`
+				).join('')
+			}$1`
+		);
+
+		if (noscript) {
 			transformedMarkup = transformedMarkup.replace(
-				/(\n\s*<\/body>)/,
-				`\n${indent}${indent}<script>${importCSS.trim()}</script>${
-					scripts.map(_ =>
-						`\n${indent}${indent}<script>importCSS('${_.filter(_ => _).join(`', '`)}')</script>`
+				mountPoint,
+				`${nl}<noscript>${
+					scripts.map(([href, media]) =>
+						`${nl}${indent}<link rel="stylesheet" href="${href}"${media ? ` media=${media}` : ''}>`
 					).join('')
-				}$1`
+				}${nl}</noscript>$1`
+			);
+		}
+
+		if (preload && !useXHR) {
+			transformedMarkup = transformedMarkup.replace(
+				headPoint,
+				`${scripts.map(([href, media]) =>
+					`${nl}<link rel="preload" href="${href}"${media ? ` media=${media}` : ''}>`
+				).join('')}$1`
 			);
 		}
 
