@@ -106,23 +106,12 @@ export default function transform(markup, { base, useXHR, noscript, preload }) {
 
 		transformedMarkup = transformedMarkup.replace(
 			mountPoint,
-			`${nl}<script>${importCSS.trim()}</script>${
+			`${nl}<script>${nl}${indent}${importCSS.trim()};${
 				scripts.map(_ =>
-					`${nl}<script>importCSS('${_.filter(_ => _).join(`', '`)}')</script>`
+					`${nl}${indent}importCSS('${_.filter(_ => _).join(`', '`)}');`
 				).join('')
-			}$1`
+			}${nl}</script>$1`
 		);
-
-		if (noscript) {
-			transformedMarkup = transformedMarkup.replace(
-				mountPoint,
-				`${nl}<noscript>${
-					scripts.map(([href, media]) =>
-						`${nl}${indent}<link rel="stylesheet" href="${href}"${media ? ` media=${media}` : ''}>`
-					).join('')
-				}${nl}</noscript>$1`
-			);
-		}
 
 		if (preload && !useXHR) {
 			transformedMarkup = transformedMarkup.replace(
@@ -130,6 +119,17 @@ export default function transform(markup, { base, useXHR, noscript, preload }) {
 				`${scripts.map(([href, media]) =>
 					`${nl}<link rel="preload" href="${href}"${media ? ` media=${media}` : ''}>`
 				).join('')}$1`
+			);
+		}
+
+		if (noscript) {
+			transformedMarkup = transformedMarkup.replace(
+				headPoint,
+				`${nl}<noscript>${
+					scripts.map(([href, media]) =>
+						`${nl}${indent}<link rel="stylesheet" href="${href}"${media ? ` media=${media}` : ''}>`
+					).join('')
+				}${nl}</noscript>$1`
 			);
 		}
 
