@@ -20,14 +20,17 @@ yarn add -D gulp-progressive-css
 By using this plugin you can easily transform your simple HTML page to super fast HTML page with progressive CSS loading. You can do it by using custom `priority` attribute with `<link>` tag.
 
 ```html
+<link rel="stylesheet" priority="async"    href="font.css">
 <link rel="stylesheet" priority="critical" href="critical.css">
-<link rel="stylesheet" priority="queued" href="content.css">
-<link rel="stylesheet" priority="queued" href="footer.css">
+<link rel="stylesheet" priority="queued"   href="content.css">
+<link rel="stylesheet" priority="queued"   href="footer.css">
 ```
 
 `critical` - means what this styles will be embedded into HTML file.
 
 `queued` - means what this styles will be loaded asynchronously in specified order and without render blocking.
+
+`async` - means what this styles will be loaded asynchronously outside of order and without render blocking.
 
 # API
 
@@ -39,12 +42,6 @@ Base directory to find CSS files.
 
 Default: `./`
 
-#### `Boolean options.useXHR`
-
-Load styles with `<link>` or using XMLHttpRequest. [You can get more info here.](https://github.com/TrigenSoftware/import-css#about)
-
-Default: `false`
-
 #### `Boolean options.noscript`
 
 Adds `<noscript>` tag with all styles.
@@ -53,7 +50,7 @@ Default: `true`
 
 #### `Boolean options.preload`
 
-If `useXHR` is `false` then `<link rel="preload">` will be added to `<head>` for each style.
+`<link rel="preload">` will be added to `<head>` for each style.
 
 Default: `true`
 

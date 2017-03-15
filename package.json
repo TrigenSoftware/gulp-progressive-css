@@ -1,6 +1,6 @@
 {
   "name": "gulp-progressive-css",
-  "version": "1.1.2",
+  "version": "1.2.0",
   "description": "Transfrom `<link>` in HTML to progressive CSS loading.",
   "main": "lib/index.js",
   "scripts": {
@@ -21,7 +21,7 @@
   "dependencies": {
     "detect-indent": "^5.0.0",
     "html-minifier": "^3.3.1",
-    "import-css": "^1.0.3",
+    "import-css": "^2.0.0",
     "pn": "^1.0.0",
     "through2": "^2.0.3"
   },

@@ -4,7 +4,6 @@ import through from 'through2';
 export default function plugin(inputOptions) {
 
 	const options = Object.assign({
-		useXHR:   false,
 		noscript: true,
 		preload:  true,
 		base:     './'

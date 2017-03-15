@@ -4,7 +4,7 @@
 		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 		<title>Progressive CSS Playground</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, minimal-ui">
-		<meta name="format-detection" content="telephone=no"/>
+		<meta name="format-detection" content="telephone=no">
 		<style>* {
 	box-sizing: border-box;
 }
@@ -35,8 +35,8 @@ header > main {
 section, footer {
 	display: none;
 }</style>
-		<link rel="preload" href="loader.php?file=content.css&sleep=2">
-		<link rel="preload" href="loader.php?file=footer.css&sleep=4">
+		<link rel="preload" as="style" href="loader.php?file=content.css&sleep=2">
+		<link rel="preload" as="style" href="loader.php?file=footer.css&sleep=4">
 		<noscript>
 			<link rel="stylesheet" href="loader.php?file=content.css&sleep=2">
 			<link rel="stylesheet" href="loader.php?file=footer.css&sleep=4">
@@ -59,9 +59,9 @@ section, footer {
 			</main>
 		</footer>
 		<script>
-			!(function(w){'use strict';w.importCSS=j;var d=document,e=d.body||d.getElementsByTagName('head')[0],f=d.styleSheets,g=[];function h(a,b){for(var c=f.length;c--;)if(f[c].href===a)return void b();setTimeout(function(){h(a,b)})}function j(a,b){function c(){k.addEventListener&&k.removeEventListener('load',c),l=!0;var m=!0;g=g.filter(function(n){return!(m=m&&n())})}var k=d.createElement('link'),l=!1;k.rel='stylesheet',k.href=a,k.media='only x',g.push(function(){return l&&(k.media=b||'all'),l}),e.insertBefore(k,null),k.addEventListener&&k.addEventListener('load',c),h(k.href,c)}})(window);
+			!(function(w){'use strict';w.importCSS=j;var d=document,e=d.body||d.getElementsByTagName('head')[0],f=d.styleSheets,g=[];function h(a,b){for(var c=f.length;c--;)if(f[c].href===a)return void b();setTimeout(function(){h(a,b)})}function j(a,b,c){function k(){return n&&(m.media=b||'all'),n}function l(){m.addEventListener&&m.removeEventListener('load',l),n=!0;var o=!0;c?k():g=g.filter(function(p){return!(o=o&&p())})}var m=d.createElement('link'),n=!1;m.rel='stylesheet',m.href=a,m.media='only x',c||g.push(k),e.insertBefore(m,null),m.addEventListener&&m.addEventListener('load',l),h(m.href,l)}})(window);
 			importCSS('loader.php?file=content.css&sleep=2');
-			importCSS('loader.php?file=footer.css&sleep=4');
+			importCSS('loader.php?file=footer.css&sleep=4', 0, true);
 		</script>
 	</body>
 </html>

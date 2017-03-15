@@ -8,11 +8,35 @@ function stringRegExpEscape(string) {
 	return string.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
 }
 
-function getImportCSS(useXHR = false) {
+function argsToString([url, media, async]) {
 
-	const scriptName = useXHR
-		? 'xhr'
-		: 'link-and-body';
+	let str = `'${url}'`;
+
+	if (async) {
+
+		str += ', ';
+
+		if (media) {
+			str += `'${media}'`;
+		} else {
+			str += '0';
+		}
+
+		str += ', true';
+
+	} else
+	if (media) {
+		str += `, '${media}'`;
+	}
+
+	return str;
+}
+
+function getImportCSS(async = false) {
+
+	const scriptName = async
+		? `link-in-body-async`
+		: `link-in-body`;
 
 	const scriptPath = require.resolve(`import-css/lib/${scriptName}`);
 
@@ -33,91 +57,111 @@ function getCriticalCSS(href, base = false) {
 	return Fs.readFile(cssPath, 'utf8');
 }
 
-export default function transform(markup, { base, useXHR, noscript, preload }) {
+function parse(markup) {
+
+	const styles = [],
+		scripts = [];
+
+	let transformedMarkup = markup,
+		async = false;
+
+	HTMLParser(markup, {
+		html5: true,
+		start(tag, attrs, unary, selfClosed) {
+
+			if (tag == 'link') {
+
+				let rel = false,
+					priority = false,
+					media = false,
+					href = false;
+
+				const tagRegExp = new RegExp(`(\\s*)<link ${attrs.map((attr) => {
+
+					if (attr.name == 'rel') {
+						rel = attr.value;
+					}
+
+					if (attr.name == 'priority') {
+						priority = attr.value;
+					}
+
+					if (attr.name == 'media') {
+						media = attr.value;
+					}
+
+					if (attr.name == 'href') {
+						href = attr.value;
+					}
+
+					return `\\s*${stringRegExpEscape(attr.name)}\\s*=\\s*${attr.quote}${stringRegExpEscape(attr.value)}${attr.quote}`;
+
+				}).join('')}\\s*${selfClosed}>`);
+
+				if (rel == 'stylesheet' && typeof href == 'string') {
+
+					if (priority == 'critical') {
+
+						styles.push({
+							tagRegExp,
+							href
+						});
+
+					} else
+					if (priority == 'queued' || priority == 'async') {
+
+						const isAsyncPriority = priority == 'async';
+
+						if (isAsyncPriority) {
+							async = isAsyncPriority;
+						}
+
+						scripts.push([href, media, isAsyncPriority]);
+						transformedMarkup = transformedMarkup.replace(
+							tagRegExp,
+							''
+						);
+					}
+				}
+			}
+		}
+	});
+
+	return {
+		markup: transformedMarkup,
+		styles,
+		scripts,
+		async
+	};
+}
+
+export default function transform(markup, { base, noscript, preload }) {
 
 	const indent = detectIndent(markup).indent || '  ',
 		nl = `\n${indent}${indent}`,
 		headPoint = /(\n\s*<\/head>)/,
-		mountPoint = useXHR
-			? headPoint
-			: /(\n\s*<\/body>)/,
-		styles = [],
-		scripts = [];
+		mountPoint = /(\n\s*<\/body>)/;
 
-	let transformedMarkup = markup;
+	const { markup: m, styles, scripts, async } = parse(markup);
 
-	return getImportCSS(useXHR).then((importCSS) => {
+	let transformedMarkup = m;
 
-		HTMLParser(markup, {
-			html5: true,
-			start(tag, attrs, unary, selfClosed) {
-
-				if (tag == 'link') {
-
-					let rel = false,
-						priority = false,
-						media = false,
-						href = false;
-
-					const tagRegExp = new RegExp(`(\\s*)<link ${attrs.map((attr) => {
-
-						if (attr.name == 'rel') {
-							rel = attr.value;
-						}
-
-						if (attr.name == 'priority') {
-							priority = attr.value;
-						}
-
-						if (attr.name == 'media') {
-							media = attr.value;
-						}
-
-						if (attr.name == 'href') {
-							href = attr.value;
-						}
-
-						return `\\s*${stringRegExpEscape(attr.name)}\\s*=\\s*${attr.quote}${stringRegExpEscape(attr.value)}${attr.quote}`;
-
-					}).join('')}\\s*${selfClosed}>`);
-
-					if (rel == 'stylesheet' && typeof href == 'string') {
-
-						if (priority == 'critical') {
-
-							styles.push({
-								tagRegExp,
-								href
-							});
-
-						} else
-						if (priority == 'queued') {
-
-							scripts.push([href, media]);
-							transformedMarkup = transformedMarkup.replace(
-								tagRegExp,
-								''
-							);
-						}
-					}
-				}
-			}
-		});
+	return getImportCSS(async).then((importCSS) => {
 
 		transformedMarkup = transformedMarkup.replace(
 			mountPoint,
 			`${nl}<script>${nl}${indent}${importCSS.trim()};${
 				scripts.map(_ =>
-					`${nl}${indent}importCSS('${_.filter(_ => _).join(`', '`)}');`
+					`${nl}${indent}importCSS(${argsToString(_)});`
 				).join('')
 			}${nl}</script>$1`
 		);
 
-		if (preload && !useXHR) {
+		if (preload) {
 			transformedMarkup = transformedMarkup.replace(
 				headPoint,
 				`${scripts.map(([href, media]) =>
-					`${nl}<link rel="preload" href="${href}"${media ? ` media=${media}` : ''}>`
+					`${nl}<link rel="preload" as="style" href="${href}"${media ? ` media=${media}` : ''}>`
 				).join('')}$1`
 			);
 		}
