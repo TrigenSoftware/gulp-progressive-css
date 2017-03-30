@@ -54,6 +54,24 @@ Default: `true`
 
 Default: `true`
 
+#### `Object|Boolean http1`
+
+All non-critical internal styles will concatenate into one file.
+
+Default: `false`
+
+#### `String http1.path`
+
+Path to save concatenated styles, relative to `options.base`
+
+Default: `''`
+
+#### `String filename(Stirng htmlFilename)`
+
+Function to generate concatenated styles file name.
+
+Default: `[html filename]-styles.css`
+
 # Example 
 [`gulpfile.js`](https://github.com/TrigenSoftware/gulp-progressive-css/tree/master/example)
 ```js

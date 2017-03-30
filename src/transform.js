@@ -1,8 +1,16 @@
 import { HTMLParser } from 'html-minifier/src/htmlparser';
 import detectIndent from 'detect-indent';
+import mkdirp from 'mkdirp';
 import Path from 'path';
 import Url from 'url';
 import Fs from 'pn/fs';
+
+function stylesNameFromHtmlFilename(htmlFilename) {
+	return `${Path.basename(
+		htmlFilename,
+		Path.extname(htmlFilename)
+	)}-styles.css`;
+}
 
 function stringRegExpEscape(string) {
 	return string.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
@@ -32,11 +40,25 @@ function argsToString([url, media, async]) {
 	return str;
 }
 
+function mkdir(dir) {
+	return new Promise((resolve, reject) => {
+		mkdirp(dir, (err) => {
+
+			if (err) {
+				reject(err);
+				return;
+			}
+
+			resolve();
+		});
+	});
+}
+
 function getImportCSS(async = false) {
 
 	const scriptName = async
-		? `link-in-body-async`
-		: `link-in-body`;
+		? 'link-in-body-async'
+		: 'link-in-body';
 
 	const scriptPath = require.resolve(`import-css/lib/${scriptName}`);
 
@@ -47,7 +69,7 @@ function getImportCSS(async = false) {
 	);
 }
 
-function getCriticalCSS(href, base = false) {
+function getCSS(href, base = false) {
 
 	const { pathname } = Url.parse(href),
 		cssPath = base
@@ -55,6 +77,34 @@ function getCriticalCSS(href, base = false) {
 			: pathname;
 
 	return Fs.readFile(cssPath, 'utf8');
+}
+
+function concatStyles(styles, base, stylesPath, getStylesFilename, htmlFilename) {
+
+	const stylesFilename = getStylesFilename(htmlFilename),
+		publicFilename = Path.join(stylesPath, stylesFilename),
+		path = Path.join(base, stylesPath),
+		filename = Path.join(base, publicFilename);
+
+	const externalStyles = [],
+		internalStyles = styles.filter((style) => {
+
+			if (/^(http|\/\/)/.test(style[0])) {
+				externalStyles.push(style);
+				return false;
+			}
+
+			return true;
+		});
+
+	return Promise.all(internalStyles.map(([_]) => getCSS(_, base)))
+		.then(_ => _.join('\n'))
+		.then(_ => mkdir(path).then(() => _))
+		.then(_ => Fs.writeFile(filename, _, 'utf8'))
+		.then(() => {
+			externalStyles.push([publicFilename, false, false]);
+			return externalStyles;
+		});
 }
 
 function parse(markup) {
@@ -135,61 +185,91 @@ function parse(markup) {
 	};
 }
 
-export default function transform(markup, { base, noscript, preload }) {
+export default function transform(htmlFilename, markup, { base, noscript, preload, http1 }) {
 
 	const indent = detectIndent(markup).indent || '  ',
 		nl = `\n${indent}${indent}`,
 		headPoint = /(\n\s*<\/head>)/,
 		mountPoint = /(\n\s*<\/body>)/;
 
+	let h1 = false,
+		h1StylesPath = '',
+		h1GetStylesFilename = stylesNameFromHtmlFilename;
+
+	if (typeof http1 == 'boolean') {
+		h1 = http1;
+	} else
+	if (typeof http1 == 'object' && http1 !== null) {
+
+		h1 = true;
+
+		if (typeof http1.path == 'string') {
+			h1StylesPath = http1.path;
+		}
+
+		if (typeof http1.filename == 'function') {
+			h1GetStylesFilename = http1.filename;
+		}
+	}
+
 	const { markup: m, styles, scripts, async } = parse(markup);
 
 	let transformedMarkup = m;
 
-	return getImportCSS(async).then((importCSS) => {
+	return getImportCSS(async)
+		.then((_) => {
 
-		transformedMarkup = transformedMarkup.replace(
-			mountPoint,
-			`${nl}<script>${nl}${indent}${importCSS.trim()};${
-				scripts.map(_ =>
-					`${nl}${indent}importCSS(${argsToString(_)});`
-				).join('')
-			}${nl}</script>$1`
-		);
+			if (h1) {
+				return concatStyles(scripts, base, h1StylesPath, h1GetStylesFilename, htmlFilename)
+					.then(__ => [_, __]);
+			}
 
-		if (preload) {
+			return [_, scripts];
+		})
+		.then(([importCSS, scripts]) => {
+
 			transformedMarkup = transformedMarkup.replace(
-				headPoint,
-				`${scripts.map(([href, media]) =>
-					`${nl}<link rel="preload" as="style" href="${href}"${media ? ` media=${media}` : ''}>`
-				).join('')}$1`
-			);
-		}
-
-		if (noscript) {
-			transformedMarkup = transformedMarkup.replace(
-				headPoint,
-				`${nl}<noscript>${
-					scripts.map(([href, media]) =>
-						`${nl}${indent}<link rel="stylesheet" href="${href}"${media ? ` media=${media}` : ''}>`
+				mountPoint,
+				`${nl}<script>${nl}${indent}${importCSS.trim()};${
+					scripts.map(_ =>
+						`${nl}${indent}importCSS(${argsToString(_)});`
 					).join('')
-				}${nl}</noscript>$1`
+				}${nl}</script>$1`
 			);
-		}
 
-		if (!styles.length) {
-			return transformedMarkup;
-		}
-
-		return Promise.all(styles.map(({ tagRegExp, href }) =>
-			getCriticalCSS(href, base).then((criticalCSS) => {
+			if (preload) {
 				transformedMarkup = transformedMarkup.replace(
-					tagRegExp,
-					`$1<style>${criticalCSS.trim()}</style>`
+					headPoint,
+					`${scripts.map(([href, media]) =>
+						`${nl}<link rel="preload" as="style" href="${href}"${media ? ` media=${media}` : ''}>`
+					).join('')}$1`
 				);
-			})
-		)).then(() =>
-			transformedMarkup
-		);
-	});
+			}
+
+			if (noscript) {
+				transformedMarkup = transformedMarkup.replace(
+					headPoint,
+					`${nl}<noscript>${
+						scripts.map(([href, media]) =>
+							`${nl}${indent}<link rel="stylesheet" href="${href}"${media ? ` media=${media}` : ''}>`
+						).join('')
+					}${nl}</noscript>$1`
+				);
+			}
+
+			if (!styles.length) {
+				return transformedMarkup;
+			}
+
+			return Promise.all(styles.map(({ tagRegExp, href }) =>
+				getCSS(href, base).then((criticalCSS) => {
+					transformedMarkup = transformedMarkup.replace(
+						tagRegExp,
+						`$1<style>${criticalCSS.trim()}</style>`
+					);
+				})
+			)).then(() =>
+				transformedMarkup
+			);
+		});
 }

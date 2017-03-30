@@ -6,7 +6,8 @@ export default function plugin(inputOptions) {
 	const options = Object.assign({
 		noscript: true,
 		preload:  true,
-		base:     './'
+		base:     './',
+		http1:    false
 	}, inputOptions);
 
 	function each(file, enc, next) {
@@ -16,6 +17,7 @@ export default function plugin(inputOptions) {
 		}
 
 		return transform(
+			file.path,
 			file.contents.toString('utf8'),
 			options
 		).then((markup) => {

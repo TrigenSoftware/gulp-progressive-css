@@ -8,6 +8,6 @@ gulp.task('css', () =>
 
 gulp.task('html', gulp.series('css', () =>
 	gulp.src('src/*.html')
-		.pipe(procss({ base: 'dist' }))
+		.pipe(procss({ base: 'dist', http1 }))
 		.pipe(gulp.dest('dist'))
 ));
