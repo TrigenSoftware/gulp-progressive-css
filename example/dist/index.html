@@ -40,10 +40,12 @@ section, footer {
 		<link rel="stylesheet" priority="async" href="loader.php?file=footer.css&sleep=4">
 		-->
 		<link rel="preload" as="style" href="//google.com/font.css">
-		<link rel="preload" as="style" href="app/index-styles.css">
+		<link rel="preload" as="style" href="content.css">
+		<link rel="preload" as="style" href="footer.css">
 		<noscript>
 			<link rel="stylesheet" href="//google.com/font.css">
-			<link rel="stylesheet" href="app/index-styles.css">
+			<link rel="stylesheet" href="content.css">
+			<link rel="stylesheet" href="footer.css">
 		</noscript>
 	</head>
 	<body>
@@ -65,7 +67,8 @@ section, footer {
 		<script>
 			!(function(w){'use strict';w.importCSS=j;var d=document,e=d.body||d.getElementsByTagName('head')[0],f=d.styleSheets,g=[];function h(a,b){for(var c=f.length;c--;)if(f[c].href===a)return void b();setTimeout(function(){h(a,b)})}function j(a,b,c){function k(){return n&&(m.media=b||'all'),n}function l(){m.addEventListener&&m.removeEventListener('load',l),n=!0;var o=!0;c?k():g=g.filter(function(p){return!(o=o&&p())})}var m=d.createElement('link'),n=!1;m.rel='stylesheet',m.href=a,m.media='only x',c||g.push(k),e.insertBefore(m,null),m.addEventListener&&m.addEventListener('load',l),h(m.href,l)}})(window);
 			importCSS('//google.com/font.css', 0, true);
-			importCSS('app/index-styles.css');
+			importCSS('content.css');
+			importCSS('footer.css');
 		</script>
 	</body>
 </html>
