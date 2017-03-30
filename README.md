@@ -66,7 +66,7 @@ Path to save concatenated styles, relative to `options.base`
 
 Default: `''`
 
-#### `String filename(Stirng htmlFilename)`
+#### `String http1.filename(Stirng htmlFilename)`
 
 Function to generate concatenated styles file name.
 
