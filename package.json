@@ -1,6 +1,6 @@
 {
   "name": "gulp-progressive-css",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Transfrom `<link>` in HTML to progressive CSS loading.",
   "main": "lib/index.js",
   "scripts": {

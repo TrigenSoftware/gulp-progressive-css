@@ -5,6 +5,9 @@ import Path from 'path';
 import Url from 'url';
 import Fs from 'pn/fs';
 
+const searchUrl = /url\((['"]?)(.+?)\1\)/g,
+	urlExcludes = ['/', 'data:', 'http:', 'https:'];
+
 function stylesNameFromHtmlFilename(htmlFilename) {
 	return `${Path.basename(
 		htmlFilename,
@@ -69,14 +72,34 @@ function getImportCSS(async = false) {
 	);
 }
 
-function getCSS(href, base = false) {
+function getCSSPath(base, href) {
 
 	const { pathname } = Url.parse(href),
-		cssPath = base
-			? Path.join(base, pathname)
-			: pathname;
+		cssPath = Path.join(base, pathname);
 
-	return Fs.readFile(cssPath, 'utf8');
+	return cssPath;
+}
+
+function getCSS(path) {
+	return Fs.readFile(path, 'utf8');
+}
+
+function resolveUrls(base, path) {
+	return (match, quote, content) => {
+
+		const skip = urlExcludes.some(_ => content.indexOf(_) === 0);
+
+		if (skip) {
+			return match;
+		}
+
+		const sourceName = Path.basename(content),
+			sourcePath = Path.resolve(Path.dirname(path), Path.dirname(content)),
+			newSourceRelativePath = Path.relative(base, sourcePath),
+			newUrl = `url(${quote}${Path.join(newSourceRelativePath, sourceName)}${quote})`;
+
+		return newUrl;
+	};
 }
 
 function concatStyles(styles, base, stylesPath, getStylesFilename, htmlFilename) {
@@ -97,7 +120,7 @@ function concatStyles(styles, base, stylesPath, getStylesFilename, htmlFilename)
 			return true;
 		});
 
-	return Promise.all(internalStyles.map(([_]) => getCSS(_, base)))
+	return Promise.all(internalStyles.map(([_]) => getCSS(getCSSPath(base, _))))
 		.then(_ => _.join('\n'))
 		.then(_ => mkdir(path).then(() => _))
 		.then(_ => Fs.writeFile(filename, _, 'utf8'))
@@ -185,16 +208,25 @@ function parse(markup) {
 	};
 }
 
-export default function transform(htmlFilename, markup, { base, noscript, preload, http1 }) {
+export default function transform(_htmlFile, { base, noscript, preload, http1 }) {
 
-	const indent = detectIndent(markup).indent || '  ',
+	const htmlFile = _htmlFile.clone({ contents: false }),
+		markup = htmlFile.contents.toString('utf8'),
+		indent = detectIndent(markup).indent || '  ',
 		nl = `\n${indent}${indent}`,
 		headPoint = /(\n\s*<\/head>)/,
-		mountPoint = /(\n\s*<\/body>)/;
+		mountPoint = /(\n\s*<\/body>)/,
+		resolvedBase = Path.resolve(base);
 
 	let h1 = false,
 		h1StylesPath = '',
 		h1GetStylesFilename = stylesNameFromHtmlFilename;
+
+	htmlFile.dirname = htmlFile.dirname.replace(
+		htmlFile.base.replace(/\/$/, ''),
+		resolvedBase
+	);
+	htmlFile.base = resolvedBase;
 
 	if (typeof http1 == 'boolean') {
 		h1 = http1;
@@ -220,7 +252,7 @@ export default function transform(htmlFilename, markup, { base, noscript, preloa
 		.then((_) => {
 
 			if (h1) {
-				return concatStyles(scripts, base, h1StylesPath, h1GetStylesFilename, htmlFilename)
+				return concatStyles(scripts, base, h1StylesPath, h1GetStylesFilename, htmlFile.path)
 					.then(__ => [_, __]);
 			}
 
@@ -261,14 +293,24 @@ export default function transform(htmlFilename, markup, { base, noscript, preloa
 				return transformedMarkup;
 			}
 
-			return Promise.all(styles.map(({ tagRegExp, href }) =>
-				getCSS(href, base).then((criticalCSS) => {
+			return Promise.all(styles.map(({ tagRegExp, href }) => {
+
+				const path = getCSSPath(base, href);
+
+				return getCSS(path).then((criticalCSS) => {
 					transformedMarkup = transformedMarkup.replace(
 						tagRegExp,
-						`$1<style>${criticalCSS.trim()}</style>`
+						`$1<style>${criticalCSS.trim().replace(
+							searchUrl,
+							resolveUrls(
+								htmlFile.dirname,
+								path
+							)
+						)}</style>`
 					);
-				})
-			)).then(() =>
+				});
+
+			})).then(() =>
 				transformedMarkup
 			);
 		});

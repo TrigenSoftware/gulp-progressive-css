@@ -17,8 +17,7 @@ export default function plugin(inputOptions) {
 		}
 
 		return transform(
-			file.path,
-			file.contents.toString('utf8'),
+			file,
 			options
 		).then((markup) => {
 
