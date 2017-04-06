@@ -5,6 +5,10 @@
 		<title>Progressive CSS Playground</title>
 		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no, minimal-ui">
 		<meta name="format-detection" content="telephone=no">
+		<!--
+		<link rel="stylesheet" priority="queued" href="loader.php?file=content.css&sleep=2">
+		<link rel="stylesheet" priority="async" href="loader.php?file=footer.css&sleep=4">
+		-->
 		<style>* {
 	box-sizing: border-box;
 }
@@ -34,11 +38,10 @@ header > main {
 
 section, footer {
 	display: none;
+}
+sub {
+	background: url(sub/this.png);
 }</style>
-		<!--
-		<link rel="stylesheet" priority="queued" href="loader.php?file=content.css&sleep=2">
-		<link rel="stylesheet" priority="async" href="loader.php?file=footer.css&sleep=4">
-		-->
 		<link rel="preload" as="style" href="//google.com/font.css">
 		<link rel="preload" as="style" href="content.css">
 		<link rel="preload" as="style" href="footer.css">

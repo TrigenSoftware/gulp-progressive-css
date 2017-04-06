@@ -60,7 +60,7 @@ All non-critical internal styles will concatenate into one file.
 
 Default: `false`
 
-#### `String http1.path`
+#### `String http1.dirname`
 
 Path to save concatenated styles, relative to `options.base`
 
