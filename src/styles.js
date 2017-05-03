@@ -77,10 +77,10 @@ export default class Styles {
 		});
 	}
 
-	getStyle(href) {
+	getStyle(href, overrideBase = false) {
 
 		const { pathname } = Url.parse(href),
-			path = Path.join(this.base, pathname);
+			path = Path.join(overrideBase || this.base, pathname);
 
 		return Fs.readFile(path, 'utf8').then(styles => ({
 			path, styles
@@ -89,7 +89,7 @@ export default class Styles {
 
 	getStyles(styles, urlsBase) {
 		return Promise.all(styles.map(style =>
-			this.getStyle(style.href).then(({ path, styles }) => {
+			this.getStyle(style.href, ulrsBase).then(({ path, styles }) => {
 
 				style.styles = styles.trim().replace(
 					searchCssUrl,
