@@ -89,7 +89,7 @@ export default class Styles {
 
 	getStyles(styles, urlsBase) {
 		return Promise.all(styles.map(style =>
-			this.getStyle(style.href, ulrsBase).then(({ path, styles }) => {
+			this.getStyle(style.href, urlsBase).then(({ path, styles }) => {
 
 				style.styles = styles.trim().replace(
 					searchCssUrl,
