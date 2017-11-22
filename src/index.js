@@ -1,5 +1,5 @@
-import Transformer from './transformer';
 import through from 'through2';
+import Transformer from './transformer';
 
 export default function plugin(inputOptions) {
 
@@ -12,17 +12,28 @@ export default function plugin(inputOptions) {
 
 	const transformer = new Transformer(options);
 
-	function each(file, enc, next) {
+	async function each(file, enc, next) {
 
 		if (file.isNull() || file.isStream()) {
 			next(null, file);
 			return;
 		}
 
-		transformer.transformHtmlFile(file).then((files) => {
-			files.forEach(file => this.push(file));
+		try {
+
+			const files = await transformer.transformHtmlFile(file);
+
+			files.forEach((file) => {
+				this.push(file);
+			});
+
 			next(null);
-		}).catch(next);
+			return;
+
+		} catch (err) {
+			next(err);
+			return;
+		}
 	}
 
 	return through.obj(each);

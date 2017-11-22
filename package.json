@@ -1,16 +1,27 @@
 {
   "name": "gulp-progressive-css",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "description": "Transfrom `<link>` in HTML to progressive CSS loading.",
-  "main": "lib/index.js",
-  "scripts": {
-    "eslint": "eslint --cache 'src/*.js'",
-    "compile": "npm run eslint && babel ./src -d ./lib",
-    "prepublish": "npm run eslint && npm run compile"
-  },
-  "repository": "https://github.com/TrigenSoftware/gulp-progressive-css",
   "author": "dangreen",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TrigenSoftware/gulp-progressive-css.git"
+  },
+  "bugs": {
+    "url": "https://github.com/TrigenSoftware/gulp-progressive-css/issues"
+  },
+  "main": "lib/index.js",
+  "engines": {
+    "node": ">=6.0.0"
+  },
+  "scripts": {
+    "lint": "eslint --cache 'src/*.js'",
+    "compile": "npm run eslint && babel ./src -d ./lib",
+    "build": "rollup -c",
+    "watch": "rollup -c -w",
+    "prepublishOnly": "npm run build"
+  },
   "keywords": [
     "gulp",
     "gulpplugin",
@@ -20,27 +31,45 @@
   ],
   "dependencies": {
     "detect-indent": "^5.0.0",
-    "html-minifier": "^3.3.1",
-    "import-css": "^2.0.0",
+    "html-minifier": "^3.5.6",
+    "import-css": "^3.0.0",
     "pn": "^1.0.0",
     "through2": "^2.0.3",
-    "vinyl": "^2.0.1"
+    "vinyl": "^2.1.0"
   },
   "devDependencies": {
-    "babel-cli": "^6.23.0",
+    "babel-core": "^6.26.0",
     "babel-plugin-add-module-exports": "^0.2.1",
-    "babel-preset-es2015": "^6.22.0",
-    "babel-preset-stage-0": "^6.22.0",
-    "eslint": "^3.15.0",
-    "eslint-config-trigen": "^1.1.0"
+    "babel-plugin-transform-runtime": "^6.23.0",
+    "babel-preset-env": "^1.6.1",
+    "babel-preset-stage-0": "^6.24.1",
+    "escope": "^3.6.0",
+    "eslint": "^4.11.0",
+    "eslint-config-trigen": "^2.3.0",
+    "rollup": "^0.51.8",
+    "rollup-plugin-babel": "^3.0.2",
+    "rollup-plugin-commonjs": "^8.2.6",
+    "rollup-plugin-eslint": "^4.0.0",
+    "rollup-plugin-node-resolve": "^3.0.0"
   },
   "babel": {
     "presets": [
-      "es2015",
+      [
+        "env",
+        {
+          "targets": {
+            "node": "6"
+          }
+        }
+      ],
       "stage-0"
     ],
     "plugins": [
-      "add-module-exports"
+      "add-module-exports",
+      "transform-runtime"
     ]
-  }
+  },
+  "files": [
+    "lib"
+  ]
 }

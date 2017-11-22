@@ -1,8 +1,8 @@
+import Path from 'path';
 import { HTMLParser } from 'html-minifier/src/htmlparser';
 import detectIndent from 'detect-indent';
-import Styles from './styles';
-import Path from 'path';
 import Fs from 'pn/fs';
+import Styles from './styles';
 
 const urlExcludes  = /^(\/\/|http:|https:)/,
 	headPoint      = /(\n\s*<\/head>)/,
@@ -48,7 +48,7 @@ function argsToString([url, media, async]) {
 	return str;
 }
 
-function getImportCSS(async = false) {
+async function getImportCSS(async = false) {
 
 	const scriptName = async
 		? 'link-in-body-async'
@@ -56,12 +56,11 @@ function getImportCSS(async = false) {
 
 	const scriptPath = require.resolve(`import-css/lib/${scriptName}`);
 
-	return Fs.readFile(scriptPath, 'utf8').then(script =>
-		script
-			.replace('\'use strict\';Object.defineProperty(exports,\'__esModule\',{value:!0}),exports.default', '!(function(w){\'use strict\';w.importCSS')
-			.replace('module.exports=exports[\'default\'];', '})(window)')
-			.trim()
-	);
+	const script = await Fs.readFile(scriptPath, 'utf8');
+
+	return script
+		.replace(/\/\/.*/g, '')
+		.trim();
 }
 
 function stylesNameFromHtmlFilename(htmlFilename) {
@@ -202,53 +201,68 @@ export default class Transfromer {
 		return this.getStyles(links);
 	}
 
-	buildImportsObject(styles, htmlFileDirname, http1ConcatedStylesFilename) {
+	async buildImportsObject(inputStyles, htmlFileDirname, http1ConcatedStylesFilename) {
 
-		const tasks = [styles.loadCritical(htmlFileDirname), getImportCSS(styles.includesAsync)];
+		const tasks = [
+			inputStyles.loadCritical(htmlFileDirname),
+			getImportCSS(inputStyles.includesAsync)
+		];
 
 		if (this.http1) {
-			tasks.push(styles.concat(this.http1.dirname, http1ConcatedStylesFilename));
+			tasks.push(inputStyles.concat(
+				this.http1.dirname,
+				http1ConcatedStylesFilename
+			));
 		}
 
-		return Promise.all(tasks).then(([styles, importCSS, concatedStyles]) => {
+		const [styles, importCSS, concatedStyles] = await Promise.all(tasks);
 
-			const importsObject = {
-				head:   {
-					critical: styles.critical.map(({ styles }) => styles),
-					preload:  [],
-					noscript: []
-				},
-				footer: {
-					importCSS,
-					imports: []
-				}
-			};
+		const importsObject = {
+			head:   {
+				critical: styles.critical
+					.map(({ styles }) => styles),
+				preload:  [],
+				noscript: []
+			},
+			footer: {
+				importCSS,
+				imports: []
+			}
+		};
+
+		if (this.http1) {
+			importsObject.footer.imports = [concatedStyles.importCSS];
+		} else {
+			importsObject.footer.imports = styles.styles
+				.map(({ importCSS }) => importCSS);
+		}
+
+		if (this.preload) {
 
 			if (this.http1) {
-				importsObject.footer.imports = [concatedStyles.importCSS];
+				importsObject.head.preload = [concatedStyles.href];
 			} else {
-				importsObject.footer.imports = styles.styles.map(({ importCSS }) => importCSS);
+				importsObject.head.preload = styles.styles
+					.map(({ href }) => href);
 			}
+		}
 
-			if (this.preload) {
+		if (this.noscript) {
+			importsObject.head.noscript = importsObject.footer.imports;
+		}
 
-				if (this.http1) {
-					importsObject.head.preload = [concatedStyles.href];
-				} else {
-					importsObject.head.preload = styles.styles.map(({ href }) => href);
-				}
-			}
-
-			if (this.noscript) {
-				importsObject.head.noscript = importsObject.footer.imports;
-			}
-
-			return importsObject;
-		});
+		return importsObject;
 	}
 
-	buildImportsHtmlStrings(styles, htmlFileDirname, http1ConcatedStylesFilename) {
-		return this.buildImportsObject(styles, htmlFileDirname, http1ConcatedStylesFilename).then(importsObject => ({
+	async buildImportsHtmlStrings(styles, htmlFileDirname, http1ConcatedStylesFilename) {
+
+		const importsObject = await this.buildImportsObject(
+			styles,
+			htmlFileDirname,
+			http1ConcatedStylesFilename
+		);
+
+		return {
 			head:   {
 				critical: importsObject.head.critical,
 				preload:  importsObject.head.preload.map(href =>
@@ -264,12 +278,16 @@ export default class Transfromer {
 					`importCSS(${argsToString(_)});`
 				)
 			}
-		}));
+		};
 	}
 
 	cleanupHtml(markup, styles) {
 		return [...styles.critical, ...styles.styles]
-			.reduce((markup, { tagRegExp }) => markup.replace(tagRegExp, ''), markup);
+			.reduce(
+				(markup, { tagRegExp }) =>
+					markup.replace(tagRegExp, ''),
+				markup
+			);
 	}
 
 	injectImports(_markup, importsHtmlStrings) {
@@ -315,7 +333,7 @@ export default class Transfromer {
 		return markup;
 	}
 
-	transformHtmlFile(htmlFile) {
+	async transformHtmlFile(htmlFile) {
 
 		const markup = htmlFile.contents.toString('utf8'),
 			destDirname = htmlFile.dirname.replace(
@@ -330,32 +348,34 @@ export default class Transfromer {
 			http1ConcatedStylesFilename = this.http1.filename(htmlFile.path);
 		}
 
-		return this.buildImportsHtmlStrings(styles, destDirname, http1ConcatedStylesFilename)
-		.then((importsHtmlStrings) => {
+		const importsHtmlStrings = await this.buildImportsHtmlStrings(
+			styles,
+			destDirname,
+			http1ConcatedStylesFilename
+		);
 
-			const transformedHtmlFile = htmlFile.clone({ contents: false });
+		const transformedHtmlFile = htmlFile.clone({ contents: false });
 
-			transformedHtmlFile.contents = new Buffer(
-				this.injectImports(
-					this.cleanupHtml(markup, styles),
-					importsHtmlStrings
-				)
-			);
+		transformedHtmlFile.contents = new Buffer(
+			this.injectImports(
+				this.cleanupHtml(markup, styles),
+				importsHtmlStrings
+			)
+		);
 
-			const files = [transformedHtmlFile];
+		const files = [transformedHtmlFile];
 
-			if (this.http1) {
+		if (this.http1) {
 
-				const { file } = styles.concated,
-					finaleFile = htmlFile.clone({ contents: false });
+			const { file } = styles.concated,
+				finaleFile = htmlFile.clone({ contents: false });
 
-				finaleFile.contents = file.contents;
-				finaleFile.path = file.path;
+			finaleFile.contents = file.contents;
+			finaleFile.path = file.path;
 
-				files.push(finaleFile);
-			}
+			files.push(finaleFile);
+		}
 
-			return files;
-		});
+		return files;
 	}
 }

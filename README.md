@@ -1,17 +1,25 @@
-[![NPM](https://nodei.co/npm/gulp-progressive-css.png?downloads=true&downloadRank=true&stars=true)](https://nodei.co/npm/gulp-progressive-css/)
-
 # gulp-progressive-css
+
+[![NPM version][npm]][npm-url]
+[![Node version][node]][node-url]
+[![Dependency status][deps]][deps-url]
+
+[npm]: https://img.shields.io/npm/v/gulp-progressive-css.svg
+[npm-url]: https://www.npmjs.com/package/gulp-progressive-css
+
+[node]: https://img.shields.io/node/v/gulp-progressive-css.svg
+[node-url]: https://nodejs.org
+
+[deps]: https://img.shields.io/david/TrigenSoftware/gulp-progressive-css.svg
+[deps-url]: https://david-dm.org/TrigenSoftware/gulp-progressive-css
 
 Transfrom `<link>` in HTML to progressive CSS loading.
 
-# Getting Started
+# Install
 
-Install with npm
 ```bash
 npm i -D gulp-progressive-css
-```
-or
-```bash
+# or
 yarn add -D gulp-progressive-css
 ```
 
@@ -89,3 +97,6 @@ gulp.task('html', gulp.series('css', () =>
 		.pipe(gulp.dest('dist'))
 ));
 ```
+
+---
+[![NPM](https://nodei.co/npm/gulp-progressive-css.png?downloads=true&downloadRank=true&stars=true)](https://nodei.co/npm/gulp-progressive-css/)

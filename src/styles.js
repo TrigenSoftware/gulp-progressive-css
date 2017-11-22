@@ -1,6 +1,6 @@
-import Vinyl from 'vinyl';
 import Path from 'path';
 import Url from 'url';
+import Vinyl from 'vinyl';
 import Fs from 'pn/fs';
 
 const searchCssUrl = /url\((['"]?)(.+?)\1\)/g,
@@ -48,48 +48,55 @@ export default class Styles {
 		this.includesAsync = Boolean(includesAsync);
 	}
 
-	loadCritical(htmlFileDirname) {
-		return this.getStyles(this.critical, htmlFileDirname).then(() => this);
+	async loadCritical(htmlFileDirname) {
+		await this.getStyles(this.critical, htmlFileDirname);
+		return this;
 	}
 
-	concat(publicPath, filename) {
+	async concat(publicPath, filename) {
 
 		const publicFilename = Path.join(publicPath, filename),
 			dest = Path.join(this.base, publicFilename);
 
-		const internalStyles = this.styles.filter(({ href }) => !urlExcludes.test(href));
+		const internalStyles = this.styles
+			.filter(({ href }) => !urlExcludes.test(href));
 
-		return this.getStyles(internalStyles, Path.dirname(dest)).then((_) => {
+		const styles = await this.getStyles(internalStyles, Path.dirname(dest));
 
-			const concatedStyles = _.map(({ styles }) => styles).join('\n');
+		const concatedStyles = styles
+			.map(({ styles }) => styles)
+			.join('\n');
 
-			this.concated = {
-				href:      publicFilename,
-				styles:    concatedStyles,
-				file:      new Vinyl({
-					path:     dest,
-					contents: new Buffer(concatedStyles)
-				}),
-				importCSS: [publicFilename]
-			};
+		this.concated = {
+			href:      publicFilename,
+			styles:    concatedStyles,
+			file:      new Vinyl({
+				path:     dest,
+				contents: new Buffer(concatedStyles)
+			}),
+			importCSS: [publicFilename]
+		};
 
-			return this.concated;
-		});
+		return this.concated;
 	}
 
-	getStyle(href, overrideBase = false) {
+	async getStyle(href, overrideBase = false) {
 
 		const { pathname } = Url.parse(href),
 			path = Path.join(overrideBase || this.base, pathname);
 
-		return Fs.readFile(path, 'utf8').then(styles => ({
+		const styles = await Fs.readFile(path, 'utf8');
+
+		return {
 			path, styles
-		}));
+		};
 	}
 
 	getStyles(styles, urlsBase) {
-		return Promise.all(styles.map(style =>
-			this.getStyle(style.href, urlsBase).then(({ path, styles }) => {
+		return Promise.all(
+			styles.map(async (style) => {
+
+				const { path, styles } = await this.getStyle(style.href, urlsBase);
 
 				style.styles = styles.trim().replace(
 					searchCssUrl,
@@ -101,6 +108,6 @@ export default class Styles {
 
 				return style;
 			})
-		));
+		);
 	}
 }
