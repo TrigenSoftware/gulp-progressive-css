@@ -17,7 +17,6 @@
   },
   "scripts": {
     "lint": "eslint --cache 'src/*.js'",
-    "compile": "npm run eslint && babel ./src -d ./lib",
     "build": "rollup -c",
     "watch": "rollup -c -w",
     "prepublishOnly": "npm run build"
